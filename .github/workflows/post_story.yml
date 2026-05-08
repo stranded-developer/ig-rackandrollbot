@@ -22,3 +22,9 @@ jobs:
       - run: python post_story.py
         env:
           IG_COOKIES: ${{ secrets.IG_COOKIES }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: "*.png"
