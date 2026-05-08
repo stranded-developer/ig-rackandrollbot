@@ -1,0 +1,23 @@
+name: Post Daily Story
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 8am WIB = 1am UTC
+  workflow_dispatch:      # lets you trigger manually too
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - run: pip install instagrapi
+
+      - run: python post_story.py
+        env:
+          IG_USERNAME: ${{ secrets.IG_USERNAME }}
+          IG_PASSWORD: ${{ secrets.IG_PASSWORD }}
