@@ -22,27 +22,37 @@ with sync_playwright() as p:
     page.goto("https://www.instagram.com/")
     time.sleep(4)
 
+    # Dismiss first popup (messaging) - click OK by coordinates
+    page.mouse.click(194, 437)
+    time.sleep(2)
+
+    # Dismiss second popup (save login info) - click Not Now
+    try:
+        page.click("text=Not now", timeout=5000)
+        time.sleep(2)
+        print("Dismissed save login popup")
+    except:
+        pass
+
     page.screenshot(path="debug.png")
 
-    # Click OK button by coordinates (visible in screenshot)
-    page.mouse.click(194, 437)
-    time.sleep(1)
-    print("Clicked OK by coordinates")
-
-    # Also try pressing Escape
-    page.keyboard.press("Escape")
-    time.sleep(1)
-
-    page.screenshot(path="after_dismiss.png")
-
-    # Click + button top right by coordinates
+    # Click "Your story" + button
     try:
         with page.expect_file_chooser(timeout=15000) as fc_info:
-            page.mouse.click(323, 18)  # + button top right
+            page.mouse.click(57, 100)  # Your story circle
         file_chooser = fc_info.value
         file_chooser.set_files(image_path)
-        time.sleep(3)
+        time.sleep(5)
         page.screenshot(path="after_upload.png")
+
+        # Tap "Add to story" or share button
+        try:
+            page.click("text=Add to story", timeout=8000)
+            time.sleep(3)
+        except:
+            pass
+
+        page.screenshot(path="final.png")
         print(f"Posted {image_path}")
     except Exception as e:
         print(f"Error: {e}")
