@@ -1,27 +1,35 @@
 import os
 import json
+import time
+import random
 from datetime import datetime
-from instagrapi import Client
+from playwright.sync_api import sync_playwright
 
-USERNAME = os.environ["IG_USERNAME"]
-PASSWORD = os.environ["IG_PASSWORD"]
-SESSION_JSON = os.environ.get("IG_SESSION", "")
-
+COOKIES = json.loads(os.environ["IG_COOKIES"])
 STORIES = ["stories/1.png", "stories/2.png", "stories/3.png", "stories/4.png", "stories/5.png"]
 
-cl = Client()
-if SESSION_JSON:
-    cl.set_settings(json.loads(SESSION_JSON))
-    try:
-        cl.get_timeline_feed()
-    except:
-        cl.login(USERNAME, PASSWORD)
-else:
-    cl.login(USERNAME, PASSWORD)
-
-# Pick image based on day of year, cycles through 4
 day_index = datetime.now().timetuple().tm_yday % len(STORIES)
 image_path = STORIES[day_index]
 
-cl.photo_upload_to_story(image_path)
-print(f"Posted {image_path}")
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    context = browser.new_context()
+    context.add_cookies(COOKIES)
+    page = context.new_page()
+
+    page.goto("https://www.instagram.com/")
+    time.sleep(3)
+
+    # Upload story
+    page.goto("https://www.instagram.com/")
+    time.sleep(2)
+
+    with page.expect_file_chooser() as fc_info:
+        page.click("svg[aria-label='New post']")
+        time.sleep(1)
+    file_chooser = fc_info.value
+    file_chooser.set_files(image_path)
+    time.sleep(3)
+
+    print(f"Posted {image_path}")
+    browser.close()

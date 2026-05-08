@@ -3,7 +3,7 @@ name: Post Daily Story
 on:
   schedule:
     - cron: '0 1 * * *'  # 8am WIB = 1am UTC
-  workflow_dispatch:      # lets you trigger manually too
+  workflow_dispatch:
 
 jobs:
   post:
@@ -15,9 +15,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - run: pip install instagrapi
+      - run: pip install playwright
+
+      - run: playwright install chromium
 
       - run: python post_story.py
         env:
-          IG_USERNAME: ${{ secrets.IG_USERNAME }}
-          IG_PASSWORD: ${{ secrets.IG_PASSWORD }}
+          IG_COOKIES: ${{ secrets.IG_COOKIES }}
