@@ -22,36 +22,42 @@ with sync_playwright() as p:
     page.goto("https://www.instagram.com/")
     time.sleep(4)
 
-    # Dismiss first popup (messaging) - click OK by coordinates
-    page.mouse.click(194, 437)
-    time.sleep(2)
-
-    # Dismiss second popup (save login info) - click Not Now
-    try:
-        page.click("text=Not now", timeout=5000)
-        time.sleep(2)
-        print("Dismissed save login popup")
-    except:
-        pass
+    # Keep dismissing whatever popup appears, up to 5 times
+    for i in range(5):
+        try:
+            page.click("button:has-text('OK')", timeout=3000)
+            print(f"Clicked OK round {i}")
+            time.sleep(1)
+        except:
+            pass
+        try:
+            page.click("button:has-text('Not now')", timeout=3000)
+            print(f"Clicked Not now round {i}")
+            time.sleep(1)
+        except:
+            pass
+        try:
+            page.click("button:has-text('Not Now')", timeout=3000)
+            print(f"Clicked Not Now round {i}")
+            time.sleep(1)
+        except:
+            pass
 
     page.screenshot(path="debug.png")
 
     # Click "Your story" + button
     try:
         with page.expect_file_chooser(timeout=15000) as fc_info:
-            page.mouse.click(57, 100)  # Your story circle
+            page.mouse.click(57, 100)
         file_chooser = fc_info.value
         file_chooser.set_files(image_path)
         time.sleep(5)
         page.screenshot(path="after_upload.png")
-
-        # Tap "Add to story" or share button
         try:
             page.click("text=Add to story", timeout=8000)
             time.sleep(3)
         except:
             pass
-
         page.screenshot(path="final.png")
         print(f"Posted {image_path}")
     except Exception as e:
