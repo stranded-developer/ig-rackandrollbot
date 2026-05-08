@@ -22,27 +22,29 @@ with sync_playwright() as p:
     page.goto("https://www.instagram.com/")
     time.sleep(4)
 
-    # Print all buttons on page so we can see exact text
-    buttons = page.evaluate("""
-        () => Array.from(document.querySelectorAll('button')).map(b => b.innerText.trim())
-    """)
-    print("Buttons found:", buttons)
-
-    # Click all buttons matching OK or Not
-    page.evaluate("""
+    # Get ALL elements with text OK or Not now
+    elements = page.evaluate("""
         () => {
-            document.querySelectorAll('button').forEach(b => {
-                const t = b.innerText.trim().toLowerCase();
-                if (t === 'ok' || t === 'not now') b.click();
+            const all = document.querySelectorAll('*');
+            const results = [];
+            all.forEach(el => {
+                const t = el.innerText?.trim();
+                if (t === 'OK' || t === 'Not now' || t === 'Not Now') {
+                    results.push({
+                        tag: el.tagName,
+                        text: t,
+                        role: el.getAttribute('role'),
+                        x: el.getBoundingClientRect().x,
+                        y: el.getBoundingClientRect().y,
+                        width: el.getBoundingClientRect().width,
+                        height: el.getBoundingClientRect().height,
+                    });
+                }
             });
+            return results;
         }
     """)
-    time.sleep(2)
-
-    buttons2 = page.evaluate("""
-        () => Array.from(document.querySelectorAll('button')).map(b => b.innerText.trim())
-    """)
-    print("Buttons after dismiss:", buttons2)
+    print("Elements:", elements)
 
     page.screenshot(path="debug.png")
     browser.close()
