@@ -22,19 +22,15 @@ with sync_playwright() as p:
     page.goto("https://www.instagram.com/")
     time.sleep(4)
 
-    # Click OK div (x:195, y:538)
     page.mouse.click(195, 538)
     print("Clicked OK")
     time.sleep(2)
-
-    # Click Not now div (x:195, y:502)
     page.mouse.click(195, 502)
     print("Clicked Not now")
     time.sleep(2)
 
     page.screenshot(path="debug.png")
 
-    # Click "Your story" circle
     try:
         with page.expect_file_chooser(timeout=15000) as fc_info:
             page.mouse.click(57, 100)
@@ -42,13 +38,36 @@ with sync_playwright() as p:
         file_chooser.set_files(image_path)
         time.sleep(5)
         page.screenshot(path="after_upload.png")
-        try:
-            page.click("[aria-label='Add to story']", timeout=8000)
-            time.sleep(3)
-        except:
-            pass
+
+        # Find and print all clickable elements after upload
+        elements = page.evaluate("""
+            () => {
+                const all = document.querySelectorAll('*');
+                const results = [];
+                all.forEach(el => {
+                    const t = el.innerText?.trim();
+                    if (t && t.length < 30 && (
+                        el.getAttribute('role') === 'button' ||
+                        t.toLowerCase().includes('add') ||
+                        t.toLowerCase().includes('share') ||
+                        t.toLowerCase().includes('story') ||
+                        t.toLowerCase().includes('next')
+                    )) {
+                        results.push({
+                            tag: el.tagName,
+                            text: t,
+                            role: el.getAttribute('role'),
+                            x: el.getBoundingClientRect().x,
+                            y: el.getBoundingClientRect().y,
+                        });
+                    }
+                });
+                return results;
+            }
+        """)
+        print("Upload screen elements:", elements)
+
         page.screenshot(path="final.png")
-        print(f"Posted {image_path}")
     except Exception as e:
         print(f"Error: {e}")
         page.screenshot(path="error.png")
