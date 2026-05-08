@@ -22,29 +22,35 @@ with sync_playwright() as p:
     page.goto("https://www.instagram.com/")
     time.sleep(4)
 
-    # Get ALL elements with text OK or Not now
-    elements = page.evaluate("""
-        () => {
-            const all = document.querySelectorAll('*');
-            const results = [];
-            all.forEach(el => {
-                const t = el.innerText?.trim();
-                if (t === 'OK' || t === 'Not now' || t === 'Not Now') {
-                    results.push({
-                        tag: el.tagName,
-                        text: t,
-                        role: el.getAttribute('role'),
-                        x: el.getBoundingClientRect().x,
-                        y: el.getBoundingClientRect().y,
-                        width: el.getBoundingClientRect().width,
-                        height: el.getBoundingClientRect().height,
-                    });
-                }
-            });
-            return results;
-        }
-    """)
-    print("Elements:", elements)
+    # Click OK div (x:195, y:538)
+    page.mouse.click(195, 538)
+    print("Clicked OK")
+    time.sleep(2)
+
+    # Click Not now div (x:195, y:502)
+    page.mouse.click(195, 502)
+    print("Clicked Not now")
+    time.sleep(2)
 
     page.screenshot(path="debug.png")
+
+    # Click "Your story" circle
+    try:
+        with page.expect_file_chooser(timeout=15000) as fc_info:
+            page.mouse.click(57, 100)
+        file_chooser = fc_info.value
+        file_chooser.set_files(image_path)
+        time.sleep(5)
+        page.screenshot(path="after_upload.png")
+        try:
+            page.click("[aria-label='Add to story']", timeout=8000)
+            time.sleep(3)
+        except:
+            pass
+        page.screenshot(path="final.png")
+        print(f"Posted {image_path}")
+    except Exception as e:
+        print(f"Error: {e}")
+        page.screenshot(path="error.png")
+    
     browser.close()
