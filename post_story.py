@@ -12,9 +12,10 @@ image_path = STORIES[day_index]
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
+    # Use desktop viewport instead of mobile
     context = browser.new_context(
-        viewport={"width": 390, "height": 844},
-        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
+        viewport={"width": 1280, "height": 900},
+        user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     )
     context.add_cookies(COOKIES)
     page = context.new_page()
@@ -22,52 +23,36 @@ with sync_playwright() as p:
     page.goto("https://www.instagram.com/")
     time.sleep(4)
 
+    # Dismiss popups
     page.mouse.click(195, 538)
-    print("Clicked OK")
     time.sleep(2)
     page.mouse.click(195, 502)
-    print("Clicked Not now")
     time.sleep(2)
 
     page.screenshot(path="debug.png")
 
+    # Click Your story on desktop
     try:
         with page.expect_file_chooser(timeout=15000) as fc_info:
-            page.mouse.click(57, 100)
+            page.click("button[aria-label='Add to story']", timeout=10000)
         file_chooser = fc_info.value
         file_chooser.set_files(image_path)
         time.sleep(5)
         page.screenshot(path="after_upload.png")
 
-        # Find and print all clickable elements after upload
-        elements = page.evaluate("""
-            () => {
-                const all = document.querySelectorAll('*');
-                const results = [];
-                all.forEach(el => {
-                    const t = el.innerText?.trim();
-                    if (t && t.length < 30 && (
-                        el.getAttribute('role') === 'button' ||
-                        t.toLowerCase().includes('add') ||
-                        t.toLowerCase().includes('share') ||
-                        t.toLowerCase().includes('story') ||
-                        t.toLowerCase().includes('next')
-                    )) {
-                        results.push({
-                            tag: el.tagName,
-                            text: t,
-                            role: el.getAttribute('role'),
-                            x: el.getBoundingClientRect().x,
-                            y: el.getBoundingClientRect().y,
-                        });
-                    }
-                });
-                return results;
-            }
-        """)
-        print("Upload screen elements:", elements)
+        # Click Share/Add to story button
+        try:
+            page.click("button:has-text('Add to story')", timeout=8000)
+            time.sleep(3)
+        except:
+            try:
+                page.click("button:has-text('Share')", timeout=8000)
+                time.sleep(3)
+            except:
+                pass
 
         page.screenshot(path="final.png")
+        print(f"Posted {image_path}")
     except Exception as e:
         print(f"Error: {e}")
         page.screenshot(path="error.png")
