@@ -12,7 +12,6 @@ image_path = STORIES[day_index]
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
-    # Use desktop viewport instead of mobile
     context = browser.new_context(
         viewport={"width": 1280, "height": 900},
         user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -23,31 +22,32 @@ with sync_playwright() as p:
     page.goto("https://www.instagram.com/")
     time.sleep(4)
 
-    # Dismiss popups
-    page.mouse.click(195, 538)
-    time.sleep(2)
-    page.mouse.click(195, 502)
-    time.sleep(2)
-
     page.screenshot(path="debug.png")
 
-    # Click Your story on desktop
+    # Click the + Create button on left sidebar
     try:
         with page.expect_file_chooser(timeout=15000) as fc_info:
-            page.click("button[aria-label='Add to story']", timeout=10000)
+            page.click("svg[aria-label='New post']", timeout=10000)
         file_chooser = fc_info.value
         file_chooser.set_files(image_path)
         time.sleep(5)
         page.screenshot(path="after_upload.png")
 
-        # Click Share/Add to story button
+        # Look for Story option in the menu
         try:
-            page.click("button:has-text('Add to story')", timeout=8000)
+            page.click("text=Story", timeout=8000)
             time.sleep(3)
+            page.screenshot(path="story_selected.png")
         except:
+            pass
+
+        # Click Add to story / Share
+        for btn_text in ["Add to story", "Share to story", "Share"]:
             try:
-                page.click("button:has-text('Share')", timeout=8000)
+                page.click(f"text={btn_text}", timeout=5000)
                 time.sleep(3)
+                print(f"Clicked {btn_text}")
+                break
             except:
                 pass
 
