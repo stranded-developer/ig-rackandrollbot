@@ -20,19 +20,33 @@ with sync_playwright() as p:
     page = context.new_page()
     
     page.goto("https://www.instagram.com/")
-    time.sleep(5)
+    time.sleep(4)
     
-    # Take screenshot to see what page looks like
+    # Dismiss any popups
+    try:
+        page.click("text=OK", timeout=5000)
+        time.sleep(1)
+        print("Dismissed OK popup")
+    except:
+        pass
+    
+    try:
+        page.click("text=Not Now", timeout=5000)
+        time.sleep(1)
+        print("Dismissed Not Now popup")
+    except:
+        pass
+
     page.screenshot(path="debug.png")
-    print("Screenshot saved")
-    
-    # Try clicking the + button for stories
+
+    # Click the + button to add story
     try:
         with page.expect_file_chooser(timeout=15000) as fc_info:
-            page.click("svg[aria-label='New story']")
+            page.click("svg[aria-label='New story']", timeout=10000)
         file_chooser = fc_info.value
         file_chooser.set_files(image_path)
         time.sleep(5)
+        page.screenshot(path="after_upload.png")
         print(f"Posted {image_path}")
     except Exception as e:
         print(f"Error: {e}")
