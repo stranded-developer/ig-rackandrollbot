@@ -21,37 +21,28 @@ with sync_playwright() as p:
     
     page.goto("https://www.instagram.com/")
     time.sleep(4)
-    
-    # Dismiss popups
-    for text in ["OK", "Not Now", "Cancel"]:
-        try:
-            page.click(f"text={text}", timeout=3000)
-            time.sleep(1)
-            print(f"Dismissed {text} popup")
-        except:
-            pass
 
     page.screenshot(path="debug.png")
 
-    # Click the + button (top right)
+    # Click OK button by coordinates (visible in screenshot)
+    page.mouse.click(194, 437)
+    time.sleep(1)
+    print("Clicked OK by coordinates")
+
+    # Also try pressing Escape
+    page.keyboard.press("Escape")
+    time.sleep(1)
+
+    page.screenshot(path="after_dismiss.png")
+
+    # Click + button top right by coordinates
     try:
         with page.expect_file_chooser(timeout=15000) as fc_info:
-            # Click the + icon in top nav
-            page.click("svg[aria-label='New post']", timeout=10000)
+            page.mouse.click(323, 18)  # + button top right
         file_chooser = fc_info.value
         file_chooser.set_files(image_path)
         time.sleep(3)
-        
         page.screenshot(path="after_upload.png")
-        
-        # Select "Story" option if menu appears
-        try:
-            page.click("text=Story", timeout=5000)
-            time.sleep(3)
-        except:
-            pass
-
-        page.screenshot(path="final.png")
         print(f"Posted {image_path}")
     except Exception as e:
         print(f"Error: {e}")
