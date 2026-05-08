@@ -12,18 +12,30 @@ image_path = STORIES[day_index]
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
-    context = browser.new_context()
+    context = browser.new_context(
+        viewport={"width": 390, "height": 844},
+        user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
+    )
     context.add_cookies(COOKIES)
     page = context.new_page()
+    
     page.goto("https://www.instagram.com/")
-    time.sleep(3)
-    page.goto("https://www.instagram.com/")
-    time.sleep(2)
-    with page.expect_file_chooser() as fc_info:
-        page.click("svg[aria-label='New post']")
-        time.sleep(1)
-    file_chooser = fc_info.value
-    file_chooser.set_files(image_path)
-    time.sleep(3)
-    print(f"Posted {image_path}")
+    time.sleep(5)
+    
+    # Take screenshot to see what page looks like
+    page.screenshot(path="debug.png")
+    print("Screenshot saved")
+    
+    # Try clicking the + button for stories
+    try:
+        with page.expect_file_chooser(timeout=15000) as fc_info:
+            page.click("svg[aria-label='New story']")
+        file_chooser = fc_info.value
+        file_chooser.set_files(image_path)
+        time.sleep(5)
+        print(f"Posted {image_path}")
+    except Exception as e:
+        print(f"Error: {e}")
+        page.screenshot(path="error.png")
+    
     browser.close()
