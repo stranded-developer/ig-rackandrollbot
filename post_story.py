@@ -1,7 +1,6 @@
 import os
 import json
 import time
-import random
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 
@@ -16,20 +15,15 @@ with sync_playwright() as p:
     context = browser.new_context()
     context.add_cookies(COOKIES)
     page = context.new_page()
-
     page.goto("https://www.instagram.com/")
     time.sleep(3)
-
-    # Upload story
     page.goto("https://www.instagram.com/")
     time.sleep(2)
-
     with page.expect_file_chooser() as fc_info:
         page.click("svg[aria-label='New post']")
         time.sleep(1)
     file_chooser = fc_info.value
     file_chooser.set_files(image_path)
     time.sleep(3)
-
     print(f"Posted {image_path}")
     browser.close()
